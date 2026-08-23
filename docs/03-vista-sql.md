@@ -71,6 +71,8 @@ se resuelve en la Fase 5, no aquí.
 
 ## Estado de este documento
 
-📝 Primera versión — pendiente de crear como SQL ejecutable real
-(dentro de `/db`) una vez que el esquema de tablas esté creado en
-Supabase.
+   ## Estado de este documento
+
+   ✅ Vista creada y validada en Supabase (22 agosto 2026) —
+   confirmado que trae correctamente elementos, parámetros de
+   instancia y geometría desde datos de prueba reales.

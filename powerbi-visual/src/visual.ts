@@ -30,6 +30,13 @@ function colorParaCategoria(categoria: string): number {
     return 0x94a3b8;
 }
 
+interface DatosElemento {
+    vertices: number[];
+    faces: number[];
+    categoria: string;
+    elementId: string;
+}
+
 export class Visual implements IVisual {
     private events: IVisualEventService;
     private target: HTMLElement;
@@ -43,6 +50,12 @@ export class Visual implements IVisual {
     private grupoElementos: THREE.Group;
     private animationId: number;
     private primeraVezConDatos: boolean = true;
+
+    private raycaster: THREE.Raycaster;
+    private mouse: THREE.Vector2;
+    private meshSeleccionado: THREE.Mesh | null = null;
+    private colorOriginalSeleccionado: THREE.Color | null = null;
+    private panelInfo: HTMLDivElement;
 
     constructor(options: VisualConstructorOptions) {
         this.events = options.host.eventService;
@@ -73,7 +86,6 @@ export class Visual implements IVisual {
         this.renderer.domElement.style.display = "block";
         this.target.appendChild(this.renderer.domElement);
 
-        // Controles de mouse: click izquierdo rota, rueda hace zoom, click derecho mueve la vista
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.08;
@@ -87,20 +99,66 @@ export class Visual implements IVisual {
         this.grupoElementos = new THREE.Group();
         this.scene.add(this.grupoElementos);
 
+        this.raycaster = new THREE.Raycaster();
+        this.mouse = new THREE.Vector2();
+
+        this.panelInfo = document.createElement('div');
+        this.panelInfo.style.cssText = "position:absolute;bottom:8px;left:8px;background:rgba(255,255,255,0.95);color:#1e293b;font-size:12px;padding:8px 12px;border-radius:6px;font-family:sans-serif;box-shadow:0 2px 6px rgba(0,0,0,0.15);display:none;max-width:90%;";
+        this.target.appendChild(this.panelInfo);
+
+        this.renderer.domElement.addEventListener('click', this.onClickElemento);
+
         this.mostrarCuboRespaldo();
         this.animate();
     }
 
+    private onClickElemento = (event: MouseEvent): void => {
+        const rect = this.renderer.domElement.getBoundingClientRect();
+        this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+        const intersects = this.raycaster.intersectObjects(this.grupoElementos.children);
+
+        // Restaurar color del elemento previamente seleccionado
+        if (this.meshSeleccionado && this.colorOriginalSeleccionado) {
+            (this.meshSeleccionado.material as THREE.MeshStandardMaterial).color.copy(this.colorOriginalSeleccionado);
+            this.meshSeleccionado = null;
+            this.colorOriginalSeleccionado = null;
+        }
+
+        if (intersects.length > 0) {
+            const mesh = intersects[0].object as THREE.Mesh;
+            const material = mesh.material as THREE.MeshStandardMaterial;
+
+            this.colorOriginalSeleccionado = material.color.clone();
+            material.color.set(0xfbbf24); // amarillo de seleccion
+            this.meshSeleccionado = mesh;
+
+            const datos = mesh.userData as DatosElemento;
+            this.panelInfo.innerHTML =
+                "<strong>ID:</strong> " + (datos.elementId || "?") +
+                "<br><strong>Categoria:</strong> " + (datos.categoria || "Sin categoria");
+            this.panelInfo.style.display = "block";
+        } else {
+            this.panelInfo.style.display = "none";
+        }
+    }
+
     private mostrarCuboRespaldo(): void {
         this.grupoElementos.clear();
+        this.meshSeleccionado = null;
+        this.panelInfo.style.display = "none";
         const geometry = new THREE.BoxGeometry(1, 1, 1);
         const material = new THREE.MeshStandardMaterial({ color: 0x2563eb });
         const mesh = new THREE.Mesh(geometry, material);
         this.grupoElementos.add(mesh);
     }
 
-    private mostrarElementos(elementos: { vertices: number[], faces: number[], categoria: string }[]): void {
+    private mostrarElementos(elementos: DatosElemento[]): void {
         this.grupoElementos.clear();
+        this.meshSeleccionado = null;
+        this.panelInfo.style.display = "none";
 
         for (const el of elementos) {
             if (!el.vertices || el.vertices.length === 0) continue;
@@ -121,11 +179,10 @@ export class Visual implements IVisual {
             });
 
             const mesh = new THREE.Mesh(geometry, material);
+            mesh.userData = { elementId: el.elementId, categoria: el.categoria } as DatosElemento;
             this.grupoElementos.add(mesh);
         }
 
-        // Solo centramos la camara la PRIMERA vez que llegan datos,
-        // asi el usuario puede seguir moviendo la vista despues sin que se reinicie
         if (this.primeraVezConDatos) {
             const box = new THREE.Box3().setFromObject(this.grupoElementos);
             if (!box.isEmpty()) {
@@ -185,18 +242,20 @@ export class Visual implements IVisual {
                 const columns = table.columns;
                 const rows = table.rows;
 
-                let idxCategory = -1, idxVertices = -1, idxFaces = -1;
+                let idxElementId = -1, idxCategory = -1, idxVertices = -1, idxFaces = -1;
 
                 for (let i = 0; i < columns.length; i++) {
                     const roles = columns[i].roles;
+                    if (roles && roles["elementId"]) idxElementId = i;
                     if (roles && roles["category"]) idxCategory = i;
                     if (roles && roles["vertices"]) idxVertices = i;
                     if (roles && roles["faces"]) idxFaces = i;
                 }
 
-                const listaElementos: { vertices: number[], faces: number[], categoria: string }[] = [];
+                const listaElementos: DatosElemento[] = [];
 
                 for (const row of rows) {
+                    const elementId = idxElementId >= 0 ? String(row[idxElementId]) : "";
                     const categoria = idxCategory >= 0 ? String(row[idxCategory]) : "Sin categoria";
                     const verticesRaw = idxVertices >= 0 ? row[idxVertices] : null;
                     const facesRaw = idxFaces >= 0 ? row[idxFaces] : null;
@@ -208,7 +267,7 @@ export class Visual implements IVisual {
                         const facesArr = facesRaw ? JSON.parse(String(facesRaw)) : [];
 
                         if (Array.isArray(verticesArr) && verticesArr.length > 0) {
-                            listaElementos.push({ vertices: verticesArr, faces: facesArr, categoria: categoria });
+                            listaElementos.push({ vertices: verticesArr, faces: facesArr, categoria: categoria, elementId: elementId });
                         }
                     } catch (e) {
                         // valor invalido, se ignora
@@ -243,5 +302,6 @@ export class Visual implements IVisual {
         if (this.controls) {
             this.controls.dispose();
         }
+        this.renderer.domElement.removeEventListener('click', this.onClickElemento);
     }
 }

@@ -3,6 +3,7 @@ import powerbi from "powerbi-visuals-api";
 import { FormattingSettingsService } from "powerbi-visuals-utils-formattingmodel";
 import "./../style/visual.less";
 import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructorOptions;
 import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
@@ -38,8 +39,10 @@ export class Visual implements IVisual {
     private renderer: THREE.WebGLRenderer;
     private scene: THREE.Scene;
     private camera: THREE.PerspectiveCamera;
+    private controls: OrbitControls;
     private grupoElementos: THREE.Group;
     private animationId: number;
+    private primeraVezConDatos: boolean = true;
 
     constructor(options: VisualConstructorOptions) {
         this.events = options.host.eventService;
@@ -69,6 +72,12 @@ export class Visual implements IVisual {
         this.renderer.setSize(width, height);
         this.renderer.domElement.style.display = "block";
         this.target.appendChild(this.renderer.domElement);
+
+        // Controles de mouse: click izquierdo rota, rueda hace zoom, click derecho mueve la vista
+        this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+        this.controls.enableDamping = true;
+        this.controls.dampingFactor = 0.08;
+        this.controls.screenSpacePanning = true;
 
         const light = new THREE.DirectionalLight(0xffffff, 1);
         light.position.set(5, 10, 5);
@@ -115,27 +124,37 @@ export class Visual implements IVisual {
             this.grupoElementos.add(mesh);
         }
 
-        const box = new THREE.Box3().setFromObject(this.grupoElementos);
-        if (!box.isEmpty()) {
-            const center = box.getCenter(new THREE.Vector3());
-            const size = box.getSize(new THREE.Vector3());
-            const maxDim = Math.max(size.x, size.y, size.z, 1);
+        // Solo centramos la camara la PRIMERA vez que llegan datos,
+        // asi el usuario puede seguir moviendo la vista despues sin que se reinicie
+        if (this.primeraVezConDatos) {
+            const box = new THREE.Box3().setFromObject(this.grupoElementos);
+            if (!box.isEmpty()) {
+                const center = box.getCenter(new THREE.Vector3());
+                const size = box.getSize(new THREE.Vector3());
+                const maxDim = Math.max(size.x, size.y, size.z, 1);
 
-            this.grupoElementos.position.sub(center);
+                this.grupoElementos.position.sub(center);
 
-            const distancia = maxDim * 1.8;
-            this.camera.position.set(distancia, distancia, distancia);
-            this.camera.lookAt(0, 0, 0);
-            this.camera.far = distancia * 10;
-            this.camera.updateProjectionMatrix();
+                const distancia = maxDim * 1.8;
+                this.camera.position.set(distancia, distancia, distancia);
+                this.camera.lookAt(0, 0, 0);
+                this.camera.far = distancia * 10;
+                this.camera.updateProjectionMatrix();
+
+                this.controls.target.set(0, 0, 0);
+                this.controls.update();
+            }
+            this.primeraVezConDatos = false;
         }
     }
 
     private animate = (): void => {
         this.animationId = requestAnimationFrame(this.animate);
-        if (this.grupoElementos) {
-            this.grupoElementos.rotation.y += 0.003;
+
+        if (this.controls) {
+            this.controls.update();
         }
+
         if (this.renderer && this.scene && this.camera) {
             this.renderer.render(this.scene, this.camera);
         }
@@ -220,6 +239,9 @@ export class Visual implements IVisual {
     public destroy(): void {
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
+        }
+        if (this.controls) {
+            this.controls.dispose();
         }
     }
 }

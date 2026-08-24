@@ -40,7 +40,6 @@ export class Visual implements IVisual {
     private camera: THREE.PerspectiveCamera;
     private grupoElementos: THREE.Group;
     private animationId: number;
-    private debugDiv: HTMLDivElement;
 
     constructor(options: VisualConstructorOptions) {
         this.events = options.host.eventService;
@@ -79,10 +78,6 @@ export class Visual implements IVisual {
         this.grupoElementos = new THREE.Group();
         this.scene.add(this.grupoElementos);
 
-        this.debugDiv = document.createElement('div');
-        this.debugDiv.style.cssText = "position:absolute;top:0;left:0;background:yellow;color:black;font-size:11px;padding:4px;z-index:9999;max-width:100%;word-break:break-all;font-family:monospace;";
-        this.target.appendChild(this.debugDiv);
-
         this.mostrarCuboRespaldo();
         this.animate();
     }
@@ -90,7 +85,7 @@ export class Visual implements IVisual {
     private mostrarCuboRespaldo(): void {
         this.grupoElementos.clear();
         const geometry = new THREE.BoxGeometry(1, 1, 1);
-        const material = new THREE.MeshStandardMaterial({ color: 0x999999 });
+        const material = new THREE.MeshStandardMaterial({ color: 0x2563eb });
         const mesh = new THREE.Mesh(geometry, material);
         this.grupoElementos.add(mesh);
     }
@@ -165,29 +160,20 @@ export class Visual implements IVisual {
 
             const dataView = options.dataViews && options.dataViews[0];
             let datosEncontrados = false;
-            let debug = "";
 
-            if (!dataView) {
-                debug = "NO HAY dataView";
-            } else if (!dataView.table) {
-                debug = "NO HAY dataView.table";
-            } else {
+            if (dataView && dataView.table) {
                 const table = dataView.table;
                 const columns = table.columns;
                 const rows = table.rows;
 
-                let idxElementId = -1, idxCategory = -1, idxVertices = -1, idxFaces = -1;
+                let idxCategory = -1, idxVertices = -1, idxFaces = -1;
 
                 for (let i = 0; i < columns.length; i++) {
                     const roles = columns[i].roles;
-                    if (roles && roles["elementId"]) idxElementId = i;
                     if (roles && roles["category"]) idxCategory = i;
                     if (roles && roles["vertices"]) idxVertices = i;
                     if (roles && roles["faces"]) idxFaces = i;
                 }
-
-                debug = "cols=" + columns.length + " rows=" + rows.length +
-                    " idx(id=" + idxElementId + ",cat=" + idxCategory + ",vert=" + idxVertices + ",faces=" + idxFaces + ")";
 
                 const listaElementos: { vertices: number[], faces: number[], categoria: string }[] = [];
 
@@ -206,11 +192,9 @@ export class Visual implements IVisual {
                             listaElementos.push({ vertices: verticesArr, faces: facesArr, categoria: categoria });
                         }
                     } catch (e) {
-                        debug += " | ERROR_PARSE:" + String(verticesRaw).substring(0, 40);
+                        // valor invalido, se ignora
                     }
                 }
-
-                debug += " | elementosValidos=" + listaElementos.length;
 
                 if (listaElementos.length > 0) {
                     this.mostrarElementos(listaElementos);
@@ -222,16 +206,9 @@ export class Visual implements IVisual {
                 this.mostrarCuboRespaldo();
             }
 
-            if (this.debugDiv) {
-                this.debugDiv.textContent = debug;
-            }
-
             this.events.renderingFinished(options);
         }
         catch (error) {
-            if (this.debugDiv) {
-                this.debugDiv.textContent = "ERROR: " + String(error);
-            }
             this.events.renderingFailed(options, String(error));
         }
     }

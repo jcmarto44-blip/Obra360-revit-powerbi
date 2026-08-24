@@ -52,18 +52,31 @@
   todavía) empaquetado e importado correctamente a Power BI
   Desktop, visible en el reporte con categorías de datos
 
+## Actualización — Código subido a GitHub (23 agosto 2026)
+
+- ✅ Git y PowerShell 7 instalados en la PC de trabajo
+- ✅ Proyecto del visual conectado con el repo remoto
+- ✅ Código del visual (pbiviz base, sin Three.js todavía) subido
+  correctamente a GitHub, dentro de `powerbi-visual/`
+- ⚠️ Pendiente de limpieza menor (no urgente): dos archivos
+  `webpack.statistics.dev.html` y `webpack.statistics.prod.html`
+  quedaron en la raíz del repo en vez de dentro de
+  `powerbi-visual/` — se pueden borrar cuando se quiera, son solo
+  reportes automáticos de pbiviz, no afectan el funcionamiento.
+
 ## Siguiente paso pendiente
 
-1. Subir el código actual del proyecto local
-   (`C:\Users\ingci\Documents\obra360pulse`) a GitHub, dentro de
-   `powerbi-visual/` — todavía no está respaldado en el repo.
-2. Programar el visual real: leer los campos de datos de
-   `vista_revit_visual360` (geometría, categoría, parámetros) y
-   renderizarlos con Three.js. Empezar con algo simple (un cubo
-   de prueba) antes de la geometría real de Revit.
-3. Después: Fase 2 (botón "Enviar a Obra360Pulse" en el add-in
-   de Revit existente `OpenViewer3D`) — se deja hasta el final.
+Programar el visual real: leer los campos de datos de
+`vista_revit_visual360` (geometría, categoría, parámetros) y
+renderizarlos con Three.js. Empezar con algo simple (un cubo de
+prueba) antes de la geometría real de Revit.
 
+Después: Fase 2 (botón "Enviar a Obra360Pulse" en el add-in de
+Revit existente `OpenViewer3D`) — se deja hasta el final.
+
+## Cómo continuar el ciclo de trabajo del visual (PC local)
+
+En PowerShell, para retomar:
 ## Notas importantes para no repetir errores
 
 - NO tocar las tablas existentes de la plataforma (`proyectos`,

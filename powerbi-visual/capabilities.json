@@ -1,13 +1,18 @@
 {
     "dataRoles": [
         {
-            "displayName": "Category Data",
+            "displayName": "Categoria",
             "name": "category",
             "kind": "Grouping"
         },
         {
-            "displayName": "Measure Data",
-            "name": "measure",
+            "displayName": "Vertices",
+            "name": "vertices",
+            "kind": "Measure"
+        },
+        {
+            "displayName": "Faces",
+            "name": "faces",
             "kind": "Measure"
         }
     ],
@@ -42,7 +47,7 @@
                         "fill": {}
                     }
                 },
-                 "fontSize": {
+                "fontSize": {
                     "type": {
                         "formatting": {
                             "fontSize": true
@@ -67,7 +72,12 @@
                     "select": [
                         {
                             "bind": {
-                                "to": "measure"
+                                "to": "vertices"
+                            }
+                        },
+                        {
+                            "bind": {
+                                "to": "faces"
                             }
                         }
                     ]

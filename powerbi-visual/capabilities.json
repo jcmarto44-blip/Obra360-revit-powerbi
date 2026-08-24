@@ -1,6 +1,11 @@
 {
     "dataRoles": [
         {
+            "displayName": "Elemento ID",
+            "name": "elementId",
+            "kind": "Grouping"
+        },
+        {
             "displayName": "Categoria",
             "name": "category",
             "kind": "Grouping"
@@ -8,12 +13,12 @@
         {
             "displayName": "Vertices",
             "name": "vertices",
-            "kind": "Measure"
+            "kind": "Grouping"
         },
         {
             "displayName": "Faces",
             "name": "faces",
-            "kind": "Measure"
+            "kind": "Grouping"
         }
     ],
     "objects": {
@@ -59,27 +64,13 @@
     },
     "dataViewMappings": [
         {
-            "categorical": {
-                "categories": {
-                    "for": {
-                        "in": "category"
-                    },
-                    "dataReductionAlgorithm": {
-                        "top": {}
-                    }
-                },
-                "values": {
+            "table": {
+                "rows": {
                     "select": [
-                        {
-                            "bind": {
-                                "to": "vertices"
-                            }
-                        },
-                        {
-                            "bind": {
-                                "to": "faces"
-                            }
-                        }
+                        { "bind": { "to": "elementId" } },
+                        { "bind": { "to": "category" } },
+                        { "bind": { "to": "vertices" } },
+                        { "bind": { "to": "faces" } }
                     ]
                 }
             }

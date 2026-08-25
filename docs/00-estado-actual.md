@@ -92,3 +92,72 @@ En PowerShell, para retomar:
   agregar `C:\Users\ingci\AppData\Roaming\npm` al PATH si `npm`
   da error de "seleccionar programa" — hay un archivo conflictivo
   en `C:\Windows\System32\npm`.
+## Actualización — Conector de Revit funcionando + Visual interactivo (24 agosto 2026)
+
+### Logros de esta sesión
+
+- ✅ Visual limpio, sin texto de diagnóstico
+- ✅ **Conector de Revit nuevo creado y funcionando** — repo separado:
+  `https://github.com/jcmarto44-blip/-Obra360Pulse-revit-connector`
+  (nota: el nombre del repo tiene un guion al inicio: `-Obra360Pulse-revit-connector`)
+- ✅ Add-in de Revit 2024 con botón "Enviar a Obra360Pulse" en su propia
+  pestaña de la cinta, sin tocar el add-in existente `OpenViewer3D`
+- ✅ **Primer envio real de datos de Revit confirmado**: 177 elementos
+  procesados y visualizados correctamente en Power BI (el modelo de
+  prueba tenia 1179 elementos totales, pero hay un limite de
+  seguridad de 300 elementos en el codigo actual — ver pendientes)
+- ✅ Control de camara con mouse (OrbitControls de Three.js): rotar,
+  zoom, mover — ya no gira solo
+- ✅ Seleccion de elementos con clic: se resalta en amarillo y
+  muestra un panel con ElementId y Categoria
+
+### Ubicaciones importantes en la PC de trabajo
+
+- Visual (Power BI): `C:\Users\ingci\Documents\obra360pulse\powerbi-visual`
+- Conector de Revit (Visual Studio): `C:\Users\ingci\Documents\Obra360Pulse.RevitConnector`
+- Archivo .addin de Revit: `%APPDATA%\Autodesk\Revit\Addins\2024\Obra360PulseConnector.addin`
+- El .addin apunta al .dll compilado en modo Debug:
+  `...\Obra360Pulse.RevitConnector\bin\x64\Debug\Obra360Pulse.RevitConnector.dll`
+
+### Decisiones tecnicas tomadas
+
+- El proyecto de Visual Studio se compila en plataforma **x64**
+  (no "Any CPU"), porque Revit es de 64 bits — esto ya esta
+  configurado en el Administrador de configuracion del proyecto.
+- El conector manda **todo el modelo** en un solo envio (no hay
+  filtro de seleccion todavia) — limitado a 300 elementos como
+  medida de seguridad para las pruebas.
+- El campo `.Value` se usa en vez de `.IntegerValue` (que esta
+  obsoleto en Revit 2024) para leer ElementId.
+
+### Pendientes claros para la siguiente sesion
+
+1. **Quitar o subir el limite de 300 elementos** en
+   `SendToObra360PulseCommand.cs` (variable `maxElementos`), para
+   poder mandar el modelo completo (probado con uno de 1179
+   elementos)
+2. **Mostrar mas parametros** al seleccionar un elemento en el
+   visual (ahora mismo solo muestra ElementId y Categoria — falta
+   family_name, level_name, y los parametros de instancia guardados
+   en Supabase)
+3. **Probar con un modelo que sí tenga el parametro "Check" Sí/No**
+   real (el modelo de prueba de hoy no lo tenia, era solo para
+   validar el flujo tecnico)
+4. **Multi-targeting**: replicar el conector para Revit 2025 y 2026
+   (decision ya tomada: empezar en 2024 primero, que es lo que ya
+   esta hecho)
+5. Filtro de seleccion antes de enviar (elegir que categorias o
+   elementos mandar, en vez de todo el modelo)
+
+### Notas importantes para no repetir errores
+
+- NO tocar las tablas existentes de la plataforma
+  (`proyectos`, `clientes`, `despachos`, `fotografico`, `planos`)
+- NO tocar el Launcher (`Program.cs`) ni el add-in `OpenViewer3D`
+  existente — el conector nuevo es un add-in completamente separado
+- Todo debe mantenerse gratis (Render, Supabase, Vercel free tier)
+- En Windows, usar `npm.cmd` con ruta completa
+  (`C:\Program Files\nodejs\npm.cmd`) si `npm` solo da error de
+  "seleccionar programa para abrir"
+- Trabajar siempre paso a paso, un cambio a la vez, con codigo
+  completo (no fragmentos) para evitar errores de copiado/pegado

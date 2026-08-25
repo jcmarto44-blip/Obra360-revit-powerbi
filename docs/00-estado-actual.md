@@ -161,3 +161,60 @@ En PowerShell, para retomar:
   "seleccionar programa para abrir"
 - Trabajar siempre paso a paso, un cambio a la vez, con codigo
   completo (no fragmentos) para evitar errores de copiado/pegado
+## Actualización — Fix critico de geometria + limite subido (25 agosto 2026)
+
+### Logros de esta sesión
+
+- ✅ Limite de elementos subido de 300 a 5000 (variable `maxElementos`
+  en `SendToObra360PulseCommand.cs`)
+- ✅ **Fix critico de geometria anidada**: el codigo original solo
+  leia `Solid` directo, pero muchos elementos (pilares, armazon,
+  techos por capas) tienen su geometria dentro de `GeometryInstance`
+  (geometria anidada de familias complejas). Se agrego una funcion
+  recursiva `ProcesarGeometria()` que tambien entra a esas instancias.
+  Esto corrigio el problema: antes solo llegaban 177 elementos
+  (incompletos), ahora llegan 500 elementos reales y representativos
+  del modelo.
+- ✅ Se agrego una lista de categorias excluidas intencionalmente
+  (decision del usuario, no bug): Armadura estructural (673
+  elementos - geometria especial de refuerzo, no prioritaria),
+  Lineas, y varias categorias de sistema/configuracion de Revit que
+  no son geometria de construccion real (Materiales, Vistas,
+  Camaras, Fases, etc.)
+- ✅ Probado con modelo real de 1179 elementos totales en Revit:
+  ahora llegan correctamente 500 elementos de construccion
+  (Muros, Pilares estructurales, Armazon estructural, Cimentacion,
+  Cubiertas, Techos, Suelos)
+- ✅ Confirmado visualmente en Power BI: el modelo se ve completo
+  y representa la obra real
+
+### Como se diagnostico el problema (para referencia futura)
+
+Se agrego temporalmente un contador de diagnostico que mostraba,
+por categoria, cuantos elementos SI tenian geometria vs cuantos NO
+— eso permitio confirmar exactamente que categorias fallaban y por
+que (geometria anidada vs elementos de sistema sin geometria real).
+Ese codigo de diagnostico ya se quito de la version final.
+
+### Pendientes para la siguiente sesión
+
+1. Mostrar mas parametros al seleccionar un elemento en el visual
+   (ahora mismo solo ElementId y Categoria — falta family_name,
+   level_name, y los parametros de instancia/tipo ya guardados)
+2. Probar con un modelo que SI tenga el parametro "Check" Si/No
+   real de avance de obra
+3. Multi-targeting: replicar el conector para Revit 2025 y 2026
+4. (Opcional, no prioritario segun el usuario) Si se necesita en
+   el futuro, investigar como capturar geometria de Armadura
+   estructural (posiblemente via AnalyticalModel o RebarInSystem,
+   API distinta a Solid normal)
+5. Filtro de seleccion antes de enviar (elegir que mandar, en vez
+   de todo el modelo siempre)
+
+### Notas importantes
+
+- El .addin sigue apuntando al mismo .dll compilado en modo Debug
+- Recordar SIEMPRE cerrar Revit antes de recompilar en Visual
+  Studio (el .dll queda bloqueado mientras Revit esta abierto)
+- Repo del conector: https://github.com/jcmarto44-blip/-Obra360Pulse-revit-connector
+  (nota: el nombre tiene un guion al inicio)

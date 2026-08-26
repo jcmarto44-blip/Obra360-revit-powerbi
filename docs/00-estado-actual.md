@@ -218,3 +218,63 @@ Ese codigo de diagnostico ya se quito de la version final.
   Studio (el .dll queda bloqueado mientras Revit esta abierto)
 - Repo del conector: https://github.com/jcmarto44-blip/-Obra360Pulse-revit-connector
   (nota: el nombre tiene un guion al inicio)
+## Actualización — Correcciones de datos y apariencia (26 agosto 2026)
+
+### Problema crítico resuelto: acumulación de modelos viejos
+
+- ❌ PROBLEMA ENCONTRADO: la vista `vista_revit_visual360` traía TODOS
+  los modelos históricos mezclados (pruebas viejas de 177, 177, 177,
+  y 1 elemento, sumadas al modelo real de 500), causando que el
+  visual se viera incompleto/incorrecto
+- ✅ RESUELTO: la vista se modificó para filtrar automáticamente
+  SOLO el modelo más reciente:
+  `WHERE e.modelo_id = (SELECT MAX(id) FROM op_modelos)`
+- ✅ Confirmado con conteos exactos: 500 elementos coinciden
+  perfectamente con el filtro real de Revit (excluyendo Armadura
+  estructural y Líneas, por decisión de negocio)
+
+### Renombrado de la vista
+
+- La vista `vista_revit_visual360` se renombró a **`visual360`**
+  (nombre corto). IMPORTANTE: en Power BI, la consulta de Power
+  Query también se actualizó (Editor avanzado) para apuntar al
+  nuevo nombre.
+
+### Mejoras de apariencia del visual (estilo Speckle)
+
+- ✅ Colores actualizados: fondo claro (`0xf5f5f5` o similar),
+  modelo en gris uniforme claro (`0xe0e0e0`), sin diferenciar por
+  categoría (decisión del usuario)
+- ✅ Iluminación mejorada (luces más intensas) para mejor
+  visibilidad
+- ✅ Indicador de carga: spinner + texto "Cargando modelo..." en
+  vez de mostrar un cubo gris de respaldo mientras no hay datos
+- ✅ Nombre del visual limpio: `displayName` cambiado a
+  "Obra360Pulse", y el `guid` cambiado a "obra360pulsevisual"
+  (antes tenía un GUID largo tipo
+  "obra360pulse23CEEBD0BFFA4BB7958DBAD94C151CC5")
+- ✅ Ícono personalizado: se reemplazó el ícono genérico por el
+  logo de la empresa (CAASA), copiado a
+  `powerbi-visual/assets/icon.png`
+- ⚠️ Pendiente/sin resolver a satisfacción: el ícono sigue sin
+  verse del todo bien en el panel "Compilar" de Power BI (el
+  usuario reporta que "se ve culero") — no se investigó más a
+  fondo, posible tema de resolución/proporción de la imagen
+
+### Aclaraciones importantes
+
+- El sufijo "1.0.0.0" en el nombre del archivo
+  `obra360pulsevisual.1.0.0.0.pbiviz` es el número de VERSIÓN del
+  visual, no un identificador feo — es normal y estándar en todos
+  los archivos .pbiviz, no se puede/debe quitar.
+
+## Pendientes para la siguiente sesión
+
+1. Multi-targeting: replicar el conector para Revit 2025 y 2026
+2. Relación con tabla CSV de la plataforma por `elementId` — el
+   usuario está preparando esta tabla por su cuenta desde su
+   plataforma, para después crear la relación en Power BI (Modelo
+   de datos) y que el visual responda a filtros/medidas DAX
+3. Revisar y mejorar el ícono del visual si se retoma ese tema
+4. Empaquetado del conector de Revit como instalador (.exe) para
+   distribución más fácil — pendiente, no urgente

@@ -11,24 +11,16 @@ import IVisual = powerbi.extensibility.visual.IVisual;
 import IVisualEventService = powerbi.extensibility.IVisualEventService;
 import { VisualFormattingSettingsModel } from "./settings";
 
-const COLORES_CATEGORIA: { [key: string]: number } = {
-    "Walls": 0x2563eb,
-    "Floors": 0x16a34a,
-    "Doors": 0xca8a04,
-    "Windows": 0x0891b2,
-    "Roofs": 0xdc2626,
-    "Structural Framing": 0x9333ea,
-    "Structural Columns": 0x9333ea,
-    "Pipes": 0xea580c,
-    "Ducts": 0x64748b,
-};
+// ========== CAMBIOS REALIZADOS ==========
+// COLOR_MODELO: 0xc7c7c7 -> 0xe0e0e0 (gris más claro)
+// Luz direccional 1: 1.1 -> 2.0 (más intensa)
+// Luz direccional 2: 0.5 -> 0.8 (más intensa)
+// Luz ambiental: 0.6 -> 1.0 (más luz indirecta)
+// ========================================
 
-function colorParaCategoria(categoria: string): number {
-    if (categoria && COLORES_CATEGORIA[categoria]) {
-        return COLORES_CATEGORIA[categoria];
-    }
-    return 0x94a3b8;
-}
+const COLOR_MODELO = 0xe0e0e0;      // <-- CAMBIADO: gris más claro
+const COLOR_SELECCION = 0xffc107;
+const COLOR_FONDO = 0xf5f5f5;
 
 interface DatosElemento {
     vertices: number[];
@@ -54,7 +46,6 @@ export class Visual implements IVisual {
     private raycaster: THREE.Raycaster;
     private mouse: THREE.Vector2;
     private meshSeleccionado: THREE.Mesh | null = null;
-    private colorOriginalSeleccionado: THREE.Color | null = null;
     private panelInfo: HTMLDivElement;
 
     constructor(options: VisualConstructorOptions) {
@@ -75,7 +66,7 @@ export class Visual implements IVisual {
         const height = this.target.clientHeight || 300;
 
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0xf0f0f0);
+        this.scene.background = new THREE.Color(COLOR_FONDO);
 
         this.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 10000);
         this.camera.position.set(10, 10, 10);
@@ -91,10 +82,17 @@ export class Visual implements IVisual {
         this.controls.dampingFactor = 0.08;
         this.controls.screenSpacePanning = true;
 
-        const light = new THREE.DirectionalLight(0xffffff, 1);
+        // ========== ILUMINACIÓN AJUSTADA ==========
+        const light = new THREE.DirectionalLight(0xffffff, 2.0);  // <-- CAMBIADO: 1.1 -> 2.0
         light.position.set(5, 10, 5);
         this.scene.add(light);
-        this.scene.add(new THREE.AmbientLight(0x808080));
+
+        const light2 = new THREE.DirectionalLight(0xffffff, 0.8);  // <-- CAMBIADO: 0.5 -> 0.8
+        light2.position.set(-5, 5, -5);
+        this.scene.add(light2);
+
+        this.scene.add(new THREE.AmbientLight(0xffffff, 1.0));     // <-- CAMBIADO: 0.6 -> 1.0
+        // ==========================================
 
         this.grupoElementos = new THREE.Group();
         this.scene.add(this.grupoElementos);
@@ -120,19 +118,16 @@ export class Visual implements IVisual {
         this.raycaster.setFromCamera(this.mouse, this.camera);
         const intersects = this.raycaster.intersectObjects(this.grupoElementos.children);
 
-        // Restaurar color del elemento previamente seleccionado
-        if (this.meshSeleccionado && this.colorOriginalSeleccionado) {
-            (this.meshSeleccionado.material as THREE.MeshStandardMaterial).color.copy(this.colorOriginalSeleccionado);
+        if (this.meshSeleccionado) {
+            (this.meshSeleccionado.material as THREE.MeshStandardMaterial).color.setHex(COLOR_MODELO);
             this.meshSeleccionado = null;
-            this.colorOriginalSeleccionado = null;
         }
 
         if (intersects.length > 0) {
             const mesh = intersects[0].object as THREE.Mesh;
             const material = mesh.material as THREE.MeshStandardMaterial;
 
-            this.colorOriginalSeleccionado = material.color.clone();
-            material.color.set(0xfbbf24); // amarillo de seleccion
+            material.color.setHex(COLOR_SELECCION);
             this.meshSeleccionado = mesh;
 
             const datos = mesh.userData as DatosElemento;
@@ -150,7 +145,7 @@ export class Visual implements IVisual {
         this.meshSeleccionado = null;
         this.panelInfo.style.display = "none";
         const geometry = new THREE.BoxGeometry(1, 1, 1);
-        const material = new THREE.MeshStandardMaterial({ color: 0x2563eb });
+        const material = new THREE.MeshStandardMaterial({ color: COLOR_MODELO });
         const mesh = new THREE.Mesh(geometry, material);
         this.grupoElementos.add(mesh);
     }
@@ -174,8 +169,10 @@ export class Visual implements IVisual {
             geometry.computeVertexNormals();
 
             const material = new THREE.MeshStandardMaterial({
-                color: colorParaCategoria(el.categoria),
-                side: THREE.DoubleSide
+                color: COLOR_MODELO,
+                side: THREE.DoubleSide,
+                metalness: 0.05,
+                roughness: 0.85
             });
 
             const mesh = new THREE.Mesh(geometry, material);

@@ -11,14 +11,7 @@ import IVisual = powerbi.extensibility.visual.IVisual;
 import IVisualEventService = powerbi.extensibility.IVisualEventService;
 import { VisualFormattingSettingsModel } from "./settings";
 
-// ========== CAMBIOS REALIZADOS ==========
-// COLOR_MODELO: 0xc7c7c7 -> 0xe0e0e0 (gris más claro)
-// Luz direccional 1: 1.1 -> 2.0 (más intensa)
-// Luz direccional 2: 0.5 -> 0.8 (más intensa)
-// Luz ambiental: 0.6 -> 1.0 (más luz indirecta)
-// ========================================
-
-const COLOR_MODELO = 0xe0e0e0;      // <-- CAMBIADO: gris más claro
+const COLOR_MODELO = 0xe0e0e0;
 const COLOR_SELECCION = 0xffc107;
 const COLOR_FONDO = 0xf5f5f5;
 
@@ -42,11 +35,13 @@ export class Visual implements IVisual {
     private grupoElementos: THREE.Group;
     private animationId: number;
     private primeraVezConDatos: boolean = true;
+    private yaCargoAlgunaVez: boolean = false;
 
     private raycaster: THREE.Raycaster;
     private mouse: THREE.Vector2;
     private meshSeleccionado: THREE.Mesh | null = null;
     private panelInfo: HTMLDivElement;
+    private overlayCarga: HTMLDivElement;
 
     constructor(options: VisualConstructorOptions) {
         this.events = options.host.eventService;
@@ -82,17 +77,15 @@ export class Visual implements IVisual {
         this.controls.dampingFactor = 0.08;
         this.controls.screenSpacePanning = true;
 
-        // ========== ILUMINACIÓN AJUSTADA ==========
-        const light = new THREE.DirectionalLight(0xffffff, 2.0);  // <-- CAMBIADO: 1.1 -> 2.0
+        const light = new THREE.DirectionalLight(0xffffff, 2.0);
         light.position.set(5, 10, 5);
         this.scene.add(light);
 
-        const light2 = new THREE.DirectionalLight(0xffffff, 0.8);  // <-- CAMBIADO: 0.5 -> 0.8
+        const light2 = new THREE.DirectionalLight(0xffffff, 0.8);
         light2.position.set(-5, 5, -5);
         this.scene.add(light2);
 
-        this.scene.add(new THREE.AmbientLight(0xffffff, 1.0));     // <-- CAMBIADO: 0.6 -> 1.0
-        // ==========================================
+        this.scene.add(new THREE.AmbientLight(0xffffff, 1.0));
 
         this.grupoElementos = new THREE.Group();
         this.scene.add(this.grupoElementos);
@@ -104,10 +97,28 @@ export class Visual implements IVisual {
         this.panelInfo.style.cssText = "position:absolute;bottom:8px;left:8px;background:rgba(255,255,255,0.95);color:#1e293b;font-size:12px;padding:8px 12px;border-radius:6px;font-family:sans-serif;box-shadow:0 2px 6px rgba(0,0,0,0.15);display:none;max-width:90%;";
         this.target.appendChild(this.panelInfo);
 
+        this.overlayCarga = document.createElement('div');
+        this.overlayCarga.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(245,245,245,0.95);font-family:sans-serif;z-index:10;";
+        this.overlayCarga.innerHTML = `
+            <div style="width:36px;height:36px;border:3px solid #d1d5db;border-top-color:#3b82f6;border-radius:50%;animation:obra360-spin 0.8s linear infinite;"></div>
+            <div style="margin-top:12px;color:#475569;font-size:13px;">Cargando modelo...</div>
+            <style>
+                @keyframes obra360-spin { to { transform: rotate(360deg); } }
+            </style>
+        `;
+        this.target.appendChild(this.overlayCarga);
+
         this.renderer.domElement.addEventListener('click', this.onClickElemento);
 
-        this.mostrarCuboRespaldo();
         this.animate();
+    }
+
+    private mostrarCarga(): void {
+        this.overlayCarga.style.display = "flex";
+    }
+
+    private ocultarCarga(): void {
+        this.overlayCarga.style.display = "none";
     }
 
     private onClickElemento = (event: MouseEvent): void => {
@@ -138,16 +149,6 @@ export class Visual implements IVisual {
         } else {
             this.panelInfo.style.display = "none";
         }
-    }
-
-    private mostrarCuboRespaldo(): void {
-        this.grupoElementos.clear();
-        this.meshSeleccionado = null;
-        this.panelInfo.style.display = "none";
-        const geometry = new THREE.BoxGeometry(1, 1, 1);
-        const material = new THREE.MeshStandardMaterial({ color: COLOR_MODELO });
-        const mesh = new THREE.Mesh(geometry, material);
-        this.grupoElementos.add(mesh);
     }
 
     private mostrarElementos(elementos: DatosElemento[]): void {
@@ -274,11 +275,14 @@ export class Visual implements IVisual {
                 if (listaElementos.length > 0) {
                     this.mostrarElementos(listaElementos);
                     datosEncontrados = true;
+                    this.yaCargoAlgunaVez = true;
                 }
             }
 
-            if (!datosEncontrados) {
-                this.mostrarCuboRespaldo();
+            if (datosEncontrados) {
+                this.ocultarCarga();
+            } else if (!this.yaCargoAlgunaVez) {
+                this.mostrarCarga();
             }
 
             this.events.renderingFinished(options);

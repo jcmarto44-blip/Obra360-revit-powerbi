@@ -278,3 +278,31 @@ Ese codigo de diagnostico ya se quito de la version final.
 3. Revisar y mejorar el ícono del visual si se retoma ese tema
 4. Empaquetado del conector de Revit como instalador (.exe) para
    distribución más fácil — pendiente, no urgente
+## Actualización — Multi-targeting completado (27 agosto 2026)
+
+### Logro: el conector ahora compila para Revit 2024, 2025 y 2026
+
+- ✅ El proyecto de Visual Studio se convirtió al formato moderno (SDK-style .csproj)
+- ✅ Se configuró TargetFrameworks: net48 (Revit 2024) y net8.0-windows (Revit 2025/2026)
+- ✅ Se usa el paquete NuGet publico Revit_All_Main_Versions_API_x64
+  - Version 2024.2.0 para net48
+  - Version 2026.0.0 para net8.0-windows
+- ✅ Confirmado en Revit 2024 real: sigue funcionando exactamente igual
+- ⚠️ NO probado en vivo Revit 2025/2026 (usuario no tiene esas versiones instaladas)
+
+### Ubicacion de los .dll compilados
+- net48\Obra360Pulse.RevitConnector.dll (Revit 2024)
+- net8.0-windows\Obra360Pulse.RevitConnector.dll (Revit 2025 y 2026)
+
+### Archivos .addin
+- 2024\Obra360PulseConnector.addin → apunta a net48
+- 2026\Obra360PulseConnector.addin → apunta a net8.0-windows
+- PENDIENTE: crear tambien carpeta 2025 con su .addin
+
+### Pendiente: instalador (.exe) automatico
+Falta crear instalador que detecte version de Revit del cliente y copie el .dll correcto sin pasos manuales.
+
+## Prioridades siguiente sesion
+1. ✅ Multi-targeting — COMPLETADO
+2. Sistema de vigencia/licencia del conector
+3. Instalador automatico (.exe)

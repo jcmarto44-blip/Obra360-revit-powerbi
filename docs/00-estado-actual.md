@@ -306,3 +306,35 @@ Falta crear instalador que detecte version de Revit del cliente y copie el .dll 
 1. ✅ Multi-targeting — COMPLETADO
 2. Sistema de vigencia/licencia del conector
 3. Instalador automatico (.exe)
+## Decisión importante — Se descarta el sistema de vigencia (27 agosto 2026)
+
+Tras analizar el flujo real de negocio, se determinó que NO es
+necesario construir un sistema de licencia/vigencia dentro del
+conector de Revit. Razón: el control de acceso ya existe en la
+plataforma de Análisis y Reportes de Obra 360 (activar/desactivar
+clientes en Portal Administrador). Si un cliente esta inactivo:
+- No puede acceder al Portal Cliente
+- No puede ver "Modelos y Reportes"
+- No tiene acceso al link de Power BI Service (controlado por el
+  usuario, no automatico)
+
+Aunque el conector de Revit siga funcionando tecnicamente y mande
+datos, esto no le da ningun valor al cliente inactivo, porque no
+tiene forma de visualizarlos. El control de acceso a nivel
+plataforma ya cumple la funcion de negocio necesaria.
+
+## Prioridades reales para la siguiente sesion (actualizadas)
+
+1. **Instalador (.exe) del conector de Revit** — usar el
+   multi-targeting ya configurado (net48 + net8.0-windows) para
+   crear un instalador que detecte la version de Revit del
+   cliente y copie el .dll + cree el .addin correspondiente
+   automaticamente, sin pasos manuales
+2. **Plugin adicional para el cliente** — el usuario menciono que
+   el CLIENTE tambien necesita un plugin/conector (posiblemente
+   distinto al que usa el usuario admin) que tambien debe ser
+   multi-version 2025/2026. PENDIENTE ACLARAR: ¿es el mismo
+   conector SendToObra360PulseCommand que ya existe, o es una
+   pieza distinta (relacionado con el check de avance semanal
+   mencionado en sesiones anteriores)? Aclarar esto al inicio de
+   la proxima sesion antes de programar.

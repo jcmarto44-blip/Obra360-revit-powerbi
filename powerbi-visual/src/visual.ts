@@ -240,14 +240,30 @@ export class Visual implements IVisual {
                 const columns = table.columns;
                 const rows = table.rows;
 
-                let idxElementId = -1, idxCategory = -1, idxVertices = -1, idxFaces = -1;
+                // Índices para las columnas base
+                let idxElementId = -1, idxCategory = -1, idxFaces = -1;
+                
+                // Arreglo para guardar los índices de las 8 columnas de vértices
+                let idxVertices: number[] = [-1, -1, -1, -1, -1, -1, -1, -1];
 
+                // Buscar los índices de las columnas
                 for (let i = 0; i < columns.length; i++) {
                     const roles = columns[i].roles;
-                    if (roles && roles["elementId"]) idxElementId = i;
-                    if (roles && roles["category"]) idxCategory = i;
-                    if (roles && roles["vertices"]) idxVertices = i;
-                    if (roles && roles["faces"]) idxFaces = i;
+                    if (!roles) continue;
+
+                    if (roles["elementId"]) idxElementId = i;
+                    if (roles["category"]) idxCategory = i;
+                    if (roles["faces"]) idxFaces = i;
+                    
+                    // Detectar cada una de las 8 columnas
+                    if (roles["vertices_1"]) idxVertices[0] = i;
+                    if (roles["vertices_2"]) idxVertices[1] = i;
+                    if (roles["vertices_3"]) idxVertices[2] = i;
+                    if (roles["vertices_4"]) idxVertices[3] = i;
+                    if (roles["vertices_5"]) idxVertices[4] = i;
+                    if (roles["vertices_6"]) idxVertices[5] = i;
+                    if (roles["vertices_7"]) idxVertices[6] = i;
+                    if (roles["vertices_8"]) idxVertices[7] = i;
                 }
 
                 const listaElementos: DatosElemento[] = [];
@@ -255,20 +271,29 @@ export class Visual implements IVisual {
                 for (const row of rows) {
                     const elementId = idxElementId >= 0 ? String(row[idxElementId]) : "";
                     const categoria = idxCategory >= 0 ? String(row[idxCategory]) : "Sin categoria";
-                    const verticesRaw = idxVertices >= 0 ? row[idxVertices] : null;
                     const facesRaw = idxFaces >= 0 ? row[idxFaces] : null;
 
-                    if (!verticesRaw) continue;
+                    // Unir los pedazos de vértices de las 8 columnas
+                    let verticesRaw = "";
+                    for (let j = 0; j < 8; j++) {
+                        if (idxVertices[j] >= 0 && row[idxVertices[j]] != null) {
+                            verticesRaw += String(row[idxVertices[j]]);
+                        }
+                    }
+
+                    if (!verticesRaw || verticesRaw.trim() === "") continue;
 
                     try {
-                        const verticesArr = JSON.parse(String(verticesRaw));
+                        // Ya unidos, se parsea el JSON completo
+                        const verticesArr = JSON.parse(verticesRaw);
                         const facesArr = facesRaw ? JSON.parse(String(facesRaw)) : [];
 
                         if (Array.isArray(verticesArr) && verticesArr.length > 0) {
                             listaElementos.push({ vertices: verticesArr, faces: facesArr, categoria: categoria, elementId: elementId });
                         }
                     } catch (e) {
-                        // valor invalido, se ignora
+                        // Si sigue fallando, muestra el error en consola
+                        console.warn("Parse falló (JSON incompleto):", elementId, categoria, String(e), verticesRaw.slice(-30));
                     }
                 }
 

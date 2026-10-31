@@ -11,8 +11,43 @@
             "kind": "Grouping"
         },
         {
-            "displayName": "Vertices",
-            "name": "vertices",
+            "displayName": "Vertices 1",
+            "name": "vertices_1",
+            "kind": "Grouping"
+        },
+        {
+            "displayName": "Vertices 2",
+            "name": "vertices_2",
+            "kind": "Grouping"
+        },
+        {
+            "displayName": "Vertices 3",
+            "name": "vertices_3",
+            "kind": "Grouping"
+        },
+        {
+            "displayName": "Vertices 4",
+            "name": "vertices_4",
+            "kind": "Grouping"
+        },
+        {
+            "displayName": "Vertices 5",
+            "name": "vertices_5",
+            "kind": "Grouping"
+        },
+        {
+            "displayName": "Vertices 6",
+            "name": "vertices_6",
+            "kind": "Grouping"
+        },
+        {
+            "displayName": "Vertices 7",
+            "name": "vertices_7",
+            "kind": "Grouping"
+        },
+        {
+            "displayName": "Vertices 8",
+            "name": "vertices_8",
             "kind": "Grouping"
         },
         {
@@ -69,7 +104,14 @@
                     "select": [
                         { "bind": { "to": "elementId" } },
                         { "bind": { "to": "category" } },
-                        { "bind": { "to": "vertices" } },
+                        { "bind": { "to": "vertices_1" } },
+                        { "bind": { "to": "vertices_2" } },
+                        { "bind": { "to": "vertices_3" } },
+                        { "bind": { "to": "vertices_4" } },
+                        { "bind": { "to": "vertices_5" } },
+                        { "bind": { "to": "vertices_6" } },
+                        { "bind": { "to": "vertices_7" } },
+                        { "bind": { "to": "vertices_8" } },
                         { "bind": { "to": "faces" } }
                     ]
                 }

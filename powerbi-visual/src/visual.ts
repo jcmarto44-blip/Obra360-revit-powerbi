@@ -240,13 +240,9 @@ export class Visual implements IVisual {
                 const columns = table.columns;
                 const rows = table.rows;
 
-                // Índices para las columnas base
                 let idxElementId = -1, idxCategory = -1, idxFaces = -1;
-                
-                // Arreglo para guardar los índices de las 8 columnas de vértices
                 let idxVertices: number[] = [-1, -1, -1, -1, -1, -1, -1, -1];
 
-                // Buscar los índices de las columnas
                 for (let i = 0; i < columns.length; i++) {
                     const roles = columns[i].roles;
                     if (!roles) continue;
@@ -255,7 +251,6 @@ export class Visual implements IVisual {
                     if (roles["category"]) idxCategory = i;
                     if (roles["faces"]) idxFaces = i;
                     
-                    // Detectar cada una de las 8 columnas
                     if (roles["vertices_1"]) idxVertices[0] = i;
                     if (roles["vertices_2"]) idxVertices[1] = i;
                     if (roles["vertices_3"]) idxVertices[2] = i;
@@ -273,7 +268,6 @@ export class Visual implements IVisual {
                     const categoria = idxCategory >= 0 ? String(row[idxCategory]) : "Sin categoria";
                     const facesRaw = idxFaces >= 0 ? row[idxFaces] : null;
 
-                    // Unir los pedazos de vértices de las 8 columnas
                     let verticesRaw = "";
                     for (let j = 0; j < 8; j++) {
                         if (idxVertices[j] >= 0 && row[idxVertices[j]] != null) {
@@ -284,7 +278,6 @@ export class Visual implements IVisual {
                     if (!verticesRaw || verticesRaw.trim() === "") continue;
 
                     try {
-                        // Ya unidos, se parsea el JSON completo
                         const verticesArr = JSON.parse(verticesRaw);
                         const facesArr = facesRaw ? JSON.parse(String(facesRaw)) : [];
 
@@ -292,8 +285,7 @@ export class Visual implements IVisual {
                             listaElementos.push({ vertices: verticesArr, faces: facesArr, categoria: categoria, elementId: elementId });
                         }
                     } catch (e) {
-                        // Si sigue fallando, muestra el error en consola
-                        console.warn("Parse falló (JSON incompleto):", elementId, categoria, String(e), verticesRaw.slice(-30));
+                        // valor invalido, se ignora
                     }
                 }
 
